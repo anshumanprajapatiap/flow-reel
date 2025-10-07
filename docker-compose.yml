@@ -1,6 +1,19 @@
 version: "3.9"
 
 services:
+  db:
+    image: postgres:15
+    container_name: flow-reel-db
+    restart: always
+    environment:
+      POSTGRES_USER: flowreel_user
+      POSTGRES_PASSWORD: flowreel_pass
+      POSTGRES_DB: flowreel
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+
   backend:
     build: ./flow-reel-backend
     container_name: flow-reel-backend
@@ -10,6 +23,9 @@ services:
       - ./flow-reel-backend:/app
     environment:
       - TZ=Asia/Kolkata
+      - DATABASE_URL=postgresql+psycopg2://flowreel_user:flowreel_pass@db:5432/flowreel
+    depends_on:
+      - db
 
   ui:
     build: ./flow-reel-ui
@@ -17,8 +33,12 @@ services:
     ports:
       - "5173:5173"
     depends_on:
-      - api
+      - backend
     environment:
       - VITE_API_URL=http://localhost:8000
     volumes:
       - ./flow-reel-ui:/app
+    command: npm run dev -- --host
+
+volumes:
+  postgres_data:

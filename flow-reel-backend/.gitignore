@@ -10,6 +10,7 @@ lerna-debug.log*
 project_uploads
 projects
 data
+flowreel.db
 __pycache__
 dist
 dist-ssr

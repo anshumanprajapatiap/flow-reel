@@ -20,7 +20,7 @@ export default function LoginPage() {
         body: JSON.stringify(user),
     });
 
-    navigate("/dashboard");
+    navigate("/");
   };
 
   return (

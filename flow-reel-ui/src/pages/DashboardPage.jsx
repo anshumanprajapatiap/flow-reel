@@ -1,5 +1,8 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
+import { User } from "lucide-react";
+
+import ProjectCard from "../components/ProjectCard";
 
 export default function DashboardPage() {
   const navigate = useNavigate();
@@ -62,19 +65,32 @@ export default function DashboardPage() {
   };
 
   return (
+    <div>
     <div className="min-h-screen bg-gray-900 text-white p-6">
       {/* Header */}
-      <div className="flex justify-between items-center mb-6">
-        <h1 className="text-2xl font-bold">🎬 BeatForge Projects</h1>
-        <button
-          className={`bg-blue-600 px-4 py-2 rounded hover:bg-blue-700 ${
-            creating ? "opacity-60 cursor-wait" : ""
-          }`}
-          onClick={handleCreateProject}
-          disabled={creating}
-        >
-          {creating ? "Creating..." : "+ New Project"}
-        </button>
+      <div className="flex justify-between items-center mb-6 border-b-gray-800">
+        <div onClick={() => navigate(`/`)}>
+          <h1 className="text-2xl font-bold cursor-pointer">🎬 Flow Reel</h1>
+        </div>
+        
+        <div className="flex justify-between gap-5">
+            <button
+              className={`bg-blue-600 px-4 py-2 rounded hover:bg-blue-700 ${
+                creating ? "opacity-60 cursor-wait" : ""
+              }`}
+              onClick={handleCreateProject}
+              disabled={creating}
+            >
+              {creating ? "Creating..." : "+ New Project"}
+            </button>
+
+            <button className="flex items-center gap-1 px-3 py-1 bg-red-600 rounded hover:bg-red-700 text-sm"
+              onClick={ () => navigate("/") }
+            >
+              <User size={16} /> Logout
+            </button>
+        </div>
+        
       </div>
 
       {/* Loading & Error States */}
@@ -86,18 +102,43 @@ export default function DashboardPage() {
         <p className="text-gray-400">No projects yet. Create your first project!</p>
       ) : (
         <div className="grid grid-cols-3 gap-4">
-          {projects.map((projectId) => (
-            <div
-              key={projectId}
-              onClick={() => navigate(`/editor/${projectId}`)}
-              className="p-4 bg-gray-800 rounded-lg cursor-pointer hover:bg-gray-700 transition"
-            >
-              <div className="h-32 bg-gray-700 rounded mb-3"></div>
-              <h2 className="text-lg font-semibold">{projectId}</h2>
-            </div>
+          {projects.map((project) => (
+            <ProjectCard key={project.id} project={project} />
           ))}
         </div>
       )}
+    </div>
+    {/* 🌙 Bottom Bar */}
+      <footer className="w-full mt-6 border-t border-gray-800 bg-[#111] py-3 flex items-center justify-between text-sm text-gray-400 px-6">
+        <p>🎬 Flow Reel — Built for learning & creativity</p>
+
+        <div className="flex items-center gap-4">
+          <a
+            href="https://github.com/anshumanprajapatiap"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="hover:text-white transition"
+          >
+            GitHub
+          </a>
+          <a
+            href="https://x.com/"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="hover:text-white transition"
+          >
+            Twitter
+          </a>
+          <a
+            href="https://www.linkedin.com/in/anshumanprajapatiap/"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="hover:text-white transition"
+          >
+            LinkedIn
+          </a>
+        </div>
+      </footer>
     </div>
   );
 }

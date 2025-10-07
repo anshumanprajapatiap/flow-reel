@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { useParams } from "react-router-dom";
 import { AnimatePresence, motion } from "framer-motion";
 
@@ -7,72 +7,90 @@ import SidebarLeft from "../components/SidebarLeft";
 import SidebarRight from "../components/SidebarRight";
 import PreviewScreen from "../components/PreviewScreen";
 import Timeline from "../components/Timeline";
-import AudioBeatPanel from "../components/AudioBeatPanel";
 import BeatAdder from "../components/BeatAdder";
 
 export default function EditorPage() {
   const { projectId } = useParams();
 
+  // ✅ Fetch user from localStorage
   const user = JSON.parse(localStorage.getItem("flowreel_user"));
   const userId = user?.id;
 
-  const [selectedAudio, setSelectedAudio] = useState(null);
+  // ✅ Video ref & playback state
+  const videoRef = useRef(null);
+  const [isPlaying, setIsPlaying] = useState(false);
+
+  // ✅ Beat Adder Modal
+  const [beatModalClip, setBeatModalClip] = useState(null);
   const [isBeatAdderOpen, setIsBeatAdderOpen] = useState(false);
 
-  const handleAudioClick = (audioFile) => {
-    setSelectedAudio(audioFile);
+  const openBeatModal = (clip) => {
+    setBeatModalClip(clip);
     setIsBeatAdderOpen(true);
   };
 
-  const handleApplyBeats = (beats) => {
-    console.log("✅ Beats saved:", beats);
-    setIsBeatAdderOpen(false);
-  };
-
-  const handleCancelBeats = () => {
+  const closeBeatModal = () => {
+    setBeatModalClip(null);
     setIsBeatAdderOpen(false);
   };
 
   return (
     <div className="flex flex-col h-screen bg-gray-900 text-white overflow-hidden">
-      {/* Top navigation bar */}
       <TopBar />
 
-      {/* Main content area */}
-      <div className="flex flex-1 overflow-hidden">
-        <SidebarLeft userId={userId} projectId={projectId} />
+      {/* Main container */}
+      <div className="flex flex-col flex-1">
+        {/* TOP SECTION (60% height of viewport) */}
+        <div className="flex w-full" style={{ height: "60vh" }}>
+          <SidebarLeft userId={userId} projectId={projectId} />
 
-        {/* Main editor section */}
-        <div className="flex flex-col flex-1 overflow-hidden relative">
-          <PreviewScreen />
-          <AudioBeatPanel />
-          <Timeline onAudioClick={handleAudioClick} />
+          <div className="flex-1 flex flex-col items-stretch overflow-hidden">
+            <PreviewScreen
+              videoRef={videoRef}
+              isPlaying={isPlaying}
+              setIsPlaying={setIsPlaying}
+            />
+          </div>
+
+          <SidebarRight />
         </div>
 
-        <SidebarRight />
+        {/* BOTTOM SECTION (40% height of viewport) */}
+        <div
+          className="w-full border-t border-gray-800 bg-amber-50"
+          style={{ height: "40vh" }}
+        >
+          <Timeline
+            videoRef={videoRef}
+            isPlaying={isPlaying}
+            setIsPlaying={setIsPlaying}
+            onOpenBeatPanel={openBeatModal}
+          />
+        </div>
       </div>
 
-      {/* BEAT ADDER MODAL (animated overlay) */}
+      {/* BeatAdder Modal */}
       <AnimatePresence>
         {isBeatAdderOpen && (
           <motion.div
-            key="beat-adder-overlay"
-            className="absolute inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-50"
+            className="absolute inset-0 bg-black/70 z-50 flex items-center justify-center"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
           >
             <motion.div
-              className="bg-gray-800 rounded-2xl shadow-2xl border border-gray-700 w-[80%] h-[80%] max-w-5xl overflow-hidden flex flex-col"
-              initial={{ y: 80, opacity: 0, scale: 0.95 }}
+              initial={{ y: 40, opacity: 0, scale: 0.98 }}
               animate={{ y: 0, opacity: 1, scale: 1 }}
-              exit={{ y: 80, opacity: 0, scale: 0.95 }}
-              transition={{ type: "spring", stiffness: 120, damping: 12 }}
+              exit={{ y: 40, opacity: 0, scale: 0.98 }}
+              className="w-[80%] h-[80%] bg-gray-800 rounded-2xl border border-gray-700 shadow-2xl overflow-hidden"
             >
               <BeatAdder
-                file={selectedAudio}
-                onApply={handleApplyBeats}
-                onCancel={handleCancelBeats}
+                file={beatModalClip}
+                onApply={(beats) => {
+                  console.log("Beats saved:", beats);
+                  closeBeatModal();
+                }}
+                onCancel={closeBeatModal}
               />
             </motion.div>
           </motion.div>

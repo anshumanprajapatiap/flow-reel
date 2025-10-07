@@ -1,4 +1,4 @@
-from fastapi import APIRouter, UploadFile, File, Form, Depends, HTTPException
+from fastapi import APIRouter, UploadFile, File, Form, Depends, HTTPException, Query
 from sqlmodel import Session, select
 from typing import List, Optional
 import os
@@ -8,8 +8,8 @@ import re
 import shutil
 
 from database import get_session
-# from models import Media
-# from schemas import MediaRead
+from models import Media
+from schemas import MediaRead
 
 router = APIRouter(prefix="/media", tags=["Media"])
 
@@ -43,12 +43,48 @@ def list_media(
     session: Session = Depends(get_session),
 ):
     """List all uploaded media files"""
+    print(f"📥 Fetch request - user_id: {user_id}, project_id: {project_id}")
+
     query = select(Media)
     if user_id:
         query = query.where(Media.user_id == user_id)
     if project_id:
         query = query.where(Media.project_id == project_id)
-    return session.exec(query).all()
+
+    result = session.exec(query).all()
+    print(f"✅ Returning {len(result)} media files")
+
+    return result
+
+
+
+# ----------------------------------------------------------
+# 3️⃣ GET: Serve media file like user_id/audio_123.mp4
+# ----------------------------------------------------------
+@router.get("/")
+def get_media_by_path(
+    user_id: str = Query(..., description="User ID who owns the file"),
+    path: str = Query(..., description="Full file path from database"),
+):
+    """
+    Fetch a media file given user_id and stored DB path.
+    Example:
+      user_id=anshuman
+      path=/app/projects/anshuman/user_stocks/audio_1759848121_xxx.mp4
+    """
+
+    # Extract filename from path
+    filename = path.split("/")[-1]
+
+    # Build file path
+    file_path = os.path.join(BASE_DIR, user_id, "user_stocks", filename)
+
+    if not os.path.exists(file_path):
+        print(f"❌ File not found for user {user_id}: {file_path}")
+        raise HTTPException(status_code=404, detail="File not found")
+
+    print(f"📤 Serving file for user '{user_id}' → {file_path}")
+    return FileResponse(file_path)
 
 
 # ----------------------------------------------------------
@@ -101,7 +137,7 @@ async def upload_media(
 
 
 # ----------------------------------------------------------
-# 4️⃣ DELETE: Delete a media file
+# 4️⃣ DELETE: Delete a single media file
 # ----------------------------------------------------------
 @router.delete("/{media_id}")
 def delete_media(media_id: int, session: Session = Depends(get_session)):
@@ -114,25 +150,35 @@ def delete_media(media_id: int, session: Session = Depends(get_session)):
     if os.path.exists(media.path):
         os.remove(media.path)
         print(f"🗑️ Deleted file: {media.path}")
+    else:
+        print(f"⚠️ File not found on disk: {media.path}")
 
     session.delete(media)
     session.commit()
-    return {"message": "Media deleted successfully"}
+
+    print(f"✅ Deleted media record: {media.id}")
+    return {"message": f"Media {media.id} deleted successfully"}
 
 
 # ----------------------------------------------------------
-# 5️⃣ CLEANUP: Delete all user files (optional admin endpoint)
+# 5️⃣ CLEANUP: Delete all user files + DB entries
 # ----------------------------------------------------------
 @router.delete("/user/{user_id}/cleanup")
 def cleanup_user_media(user_id: str, session: Session = Depends(get_session)):
-    """Delete all media for a specific user"""
+    """Delete all media files and DB records for a user"""
+    print(f"🧹 Cleanup requested for user: {user_id}")
+
+    # Delete files from disk
     user_dir = get_user_upload_dir(user_id)
     if os.path.exists(user_dir):
         shutil.rmtree(user_dir)
-        print(f"🧹 Deleted all files for {user_id}")
+        print(f"🧽 Deleted directory: {user_dir}")
 
-    # Clean DB
-    session.exec(select(Media).where(Media.user_id == user_id))
+    # Delete DB records
+    deleted = session.exec(select(Media).where(Media.user_id == user_id)).all()
+    for media in deleted:
+        session.delete(media)
     session.commit()
 
+    print(f"✅ Cleanup complete — {len(deleted)} records removed for {user_id}")
     return {"message": f"All media deleted for {user_id}"}

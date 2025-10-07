@@ -93,13 +93,32 @@ async def add_audio_to_project(
 
 
 # -----------------------------
-# 3️⃣ List User Projects
+# 3️⃣ List User Projects (with metadata)
 # -----------------------------
 @router.get("/{user_id}")
 async def list_user_projects(user_id: str):
-    """List all project files for a user"""
+    """List all project metadata for a user"""
     user_dir = get_user_dir(user_id)
-    projects = [f.replace(".json", "") for f in os.listdir(user_dir) if f.endswith(".json")]
+    
+    if not os.path.exists(user_dir):
+        raise HTTPException(status_code=404, detail="User not found or no projects")
+
+    projects = []
+    for file_name in os.listdir(user_dir):
+        if file_name.endswith(".json"):
+            file_path = os.path.join(user_dir, file_name)
+            try:
+                with open(file_path, "r") as f:
+                    data = json.load(f)
+                    projects.append({
+                        "id": data.get("project_id", file_name.replace(".json", "")),
+                        "name": data.get("project_name", "Untitled Project"),
+                        "created_at": data.get("created_at", None),
+                        "thumbnail": data.get("thumbnail", "")
+                    })
+            except Exception as e:
+                print(f"⚠️ Error reading {file_name}: {e}")
+
     return {"projects": projects}
 
 

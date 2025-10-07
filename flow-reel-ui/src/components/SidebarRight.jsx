@@ -10,7 +10,7 @@ import {
 } from "lucide-react";
 
 export default function SidebarRight() {
-  const [expanded, setExpanded] = useState(true);
+  const [expanded, setExpanded] = useState(false);
   const [tab, setTab] = useState("transitions");
 
   const tabs = [

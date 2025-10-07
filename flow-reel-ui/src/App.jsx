@@ -26,15 +26,6 @@ export default function App() {
           <Route path="/login" element={<LoginPage />} />
 
           <Route
-            path="/dashboard"
-            element={
-              <ProtectedRoute>
-                <DashboardPage />
-              </ProtectedRoute>
-            }
-          />
-
-          <Route
             path=""
             element={
               <ProtectedRoute>

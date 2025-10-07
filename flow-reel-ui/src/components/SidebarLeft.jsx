@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import {
   Film,
   Layers,
@@ -6,30 +6,43 @@ import {
   Music,
   AudioLines,
   ChevronDown,
-  Folder,
   UploadCloud,
+  Wand2,
 } from "lucide-react";
+import MediaFiles from "./MediaFiles";
+import { Button } from "./ui/button";
 
 export default function SidebarLeft({ userId, projectId }) {
   const [activeTab, setActiveTab] = useState("stocks");
-  const [activeFolder, setActiveFolder] = useState("My Stock");
   const [mediaList, setMediaList] = useState([]);
   const [uploading, setUploading] = useState(false);
 
-  // ✅ Fetch existing media for user/project
+  // Refs for file inputs (so we can trigger them from buttons)
+  const videoInputRef = useRef(null);
+  const audioInputRef = useRef(null);
+
+  // ✅ Fetch existing media
   useEffect(() => {
     if (!userId) return;
-    fetch(
-      `http://localhost:8000/media?user_id=${userId}${
-        projectId ? `&project_id=${projectId}` : ""
-      }`
-    )
-      .then((res) => res.json())
-      .then((data) => setMediaList(data))
-      .catch((err) => console.error("Error fetching media:", err));
+
+    const fetchMedia = async () => {
+      try {
+        const url = `http://localhost:8000/media?user_id=${userId}${
+          projectId ? `&project_id=${projectId}` : ""
+        }`;
+        const res = await fetch(url);
+        if (!res.ok) throw new Error(await res.text());
+        const data = await res.json();
+        setMediaList(data);
+      } catch (err) {
+        console.error("🔥 Error fetching media:", err);
+      }
+    };
+
+    fetchMedia();
   }, [userId, projectId]);
 
-  // ✅ Handle uploads
+  // ✅ Upload file
   const handleUpload = async (file, type) => {
     if (!file) return;
     setUploading(true);
@@ -38,29 +51,60 @@ export default function SidebarLeft({ userId, projectId }) {
       formData.append("file", file);
       formData.append("user_id", userId);
       formData.append("project_id", projectId || "");
-      formData.append("media_type", type);
+      formData.append("type", type);
 
       const res = await fetch("http://localhost:8000/media/upload", {
         method: "POST",
         body: formData,
       });
 
-      if (!res.ok) throw new Error("Upload failed");
+      if (!res.ok) throw new Error(await res.text());
       const data = await res.json();
       setMediaList((prev) => [...prev, data]);
     } catch (err) {
-      console.error("Upload error:", err);
-      alert("Failed to upload file");
+      alert(`Failed to upload: ${err.message}`);
     } finally {
       setUploading(false);
     }
   };
 
-  // ✅ File selection handler (reset input value after upload)
+  // ✅ Delete single media item
+  const deleteMedia = async (mediaId) => {
+    if (!window.confirm("Are you sure you want to delete this file?")) return;
+
+    try {
+      const res = await fetch(`http://localhost:8000/media/${mediaId}`, {
+        method: "DELETE",
+      });
+      if (!res.ok) throw new Error(await res.text());
+      await res.json();
+      setMediaList((prev) => prev.filter((m) => m.id !== mediaId));
+    } catch (err) {
+      alert("Failed to delete: " + err.message);
+    }
+  };
+
+  // ✅ Cleanup all media
+  const cleanupUserMedia = async () => {
+    if (!window.confirm("⚠️ Delete all your uploaded media?")) return;
+    try {
+      const res = await fetch(
+        `http://localhost:8000/media/user/${userId}/cleanup`,
+        { method: "DELETE" }
+      );
+      if (!res.ok) throw new Error(await res.text());
+      await res.json();
+      setMediaList([]);
+    } catch (err) {
+      alert("Cleanup failed: " + err.message);
+    }
+  };
+
+  // ✅ Handle file input selection
   const handleFileSelect = (e, type) => {
     const file = e.target.files[0];
     if (file) handleUpload(file, type);
-    e.target.value = ""; // reset input for next upload
+    e.target.value = ""; // reset input
   };
 
   return (
@@ -89,21 +133,6 @@ export default function SidebarLeft({ userId, projectId }) {
         ))}
       </div>
 
-      {/* Folder Section */}
-      <div className="p-3 border-b border-gray-800">
-        <h3 className="text-sm font-semibold text-gray-300 mb-2">Library</h3>
-        <button
-          className={`flex items-center gap-2 px-2 py-1 rounded ${
-            activeFolder === "My Stock"
-              ? "bg-blue-600 text-white"
-              : "text-gray-400 hover:text-white"
-          }`}
-          onClick={() => setActiveFolder("My Stock")}
-        >
-          <Folder size={14} /> My Stock
-        </button>
-      </div>
-
       {/* Header */}
       <div className="flex justify-between items-center px-3 py-2 bg-[#181818] border-b border-gray-800">
         <div className="font-medium text-sm">My Stock</div>
@@ -113,66 +142,57 @@ export default function SidebarLeft({ userId, projectId }) {
       </div>
 
       {/* Media Grid */}
-      <div className="flex-1 overflow-y-auto p-3 grid grid-cols-2 gap-3 scrollbar-thin scrollbar-thumb-gray-700 scrollbar-track-gray-900">
-        {mediaList.length === 0 && !uploading && (
-          <div className="text-center text-gray-500 text-sm col-span-2">
-            No media yet
-          </div>
-        )}
+      <MediaFiles
+        mediaFiles={mediaList}
+        uploading={uploading}
+        onDelete={deleteMedia} // ✅ connect delete handler
+      />
 
-        {uploading && (
-          <div className="col-span-2 text-center text-blue-400 text-sm animate-pulse">
-            Uploading...
-          </div>
-        )}
+      {/* Footer Buttons */}
+      <div className="p-3 border-t border-gray-800 bg-[#181818] flex items-center justify-between gap-3">
+        {/* Upload Video */}
+        <Button
+          variant="ghost"
+          className="flex flex-col items-center gap-1 text-xs text-gray-300 hover:bg-gray-700 transition w-16 h-18"
+          onClick={() => videoInputRef.current.click()}
+        >
+          <UploadCloud size={18} />
+          <span>Video</span>
+        </Button>
+        <input
+          type="file"
+          ref={videoInputRef}
+          accept="video/*"
+          className="hidden"
+          onChange={(e) => handleFileSelect(e, "video")}
+        />
 
-        {mediaList.map((m) => (
-          <div
-            key={m.id}
-            className="relative rounded overflow-hidden cursor-pointer hover:ring-2 hover:ring-blue-500 transition"
-          >
-            {m.media_type === "audio" ? (
-              <div className="flex flex-col items-center justify-center bg-gray-800 h-28 text-gray-300">
-                <AudioLines size={22} />
-                <p className="text-[10px] mt-1 truncate w-full text-center px-1">
-                  {m.file_name}
-                </p>
-              </div>
-            ) : (
-              <video
-                src={`http://localhost:8000/${m.file_path}`}
-                className="w-full h-28 object-cover opacity-90"
-                muted
-              />
-            )}
-            <div className="absolute bottom-0 left-0 right-0 bg-black/60 text-[10px] px-1 py-0.5 truncate">
-              {m.file_name}
-            </div>
-          </div>
-        ))}
-      </div>
+        {/* Upload Audio */}
+        <Button
+          variant="ghost"
+          className="flex flex-col items-center gap-1 text-xs text-gray-300 hover:bg-gray-700 transition w-16 h-18"
+          onClick={() => audioInputRef.current.click()}
+        >
+          <Music size={18} />
+          <span>Audio</span>
+        </Button>
+        <input
+          type="file"
+          ref={audioInputRef}
+          accept="audio/*"
+          className="hidden"
+          onChange={(e) => handleFileSelect(e, "audio")}
+        />
 
-      {/* Upload Buttons */}
-      <div className="p-3 border-t border-gray-800 flex flex-col gap-2 bg-[#181818]">
-        <label className="w-full bg-blue-600 py-1.5 rounded text-sm text-center hover:bg-blue-700 cursor-pointer flex items-center justify-center gap-1 transition">
-          <UploadCloud size={14} /> Upload Video
-          <input
-            type="file"
-            accept="video/*"
-            className="hidden"
-            onChange={(e) => handleFileSelect(e, "video")}
-          />
-        </label>
-
-        <label className="w-full bg-green-600 py-1.5 rounded text-sm text-center hover:bg-green-700 cursor-pointer flex items-center justify-center gap-1 transition">
-          <UploadCloud size={14} /> Upload Audio
-          <input
-            type="file"
-            accept="audio/*"
-            className="hidden"
-            onChange={(e) => handleFileSelect(e, "audio")}
-          />
-        </label>
+        {/* Cleanup All */}
+        <Button
+          variant="ghost"
+          className="flex flex-col items-center gap-1 text-xs text-gray-300 hover:bg-gray-700 transition w-16 h-18"
+          onClick={cleanupUserMedia}
+        >
+          <Wand2 size={18} />
+          <span>Clean</span>
+        </Button>
       </div>
     </div>
   );

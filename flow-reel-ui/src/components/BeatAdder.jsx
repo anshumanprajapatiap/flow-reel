@@ -8,22 +8,21 @@ export default function BeatAdder({ file, onApply, onCancel }) {
   const wavesurfer = useRef(null);
 
   const [isPlaying, setIsPlaying] = useState(false);
-  const [mode, setMode] = useState("auto"); // "auto" | "manual"
+  const [mode, setMode] = useState("auto");
   const [progress, setProgress] = useState(0);
   const [autoBeats, setAutoBeats] = useState([]);
   const [manualBeats, setManualBeats] = useState([]);
   const [intensity, setIntensity] = useState(0.5);
   const [loading, setLoading] = useState(false);
 
-  // 🎵 Initialize Waveform
   useEffect(() => {
     if (waveformRef.current && file) {
       wavesurfer.current = WaveSurfer.create({
         container: waveformRef.current,
-        waveColor: "#ddd",
-        progressColor: "#4f46e5",
+        waveColor: "#4b5563",
+        progressColor: "#6366f1",
         cursorColor: "#ef4444",
-        height: 90,
+        height: 100,
         responsive: true,
       });
 
@@ -37,7 +36,6 @@ export default function BeatAdder({ file, onApply, onCancel }) {
     }
   }, [file]);
 
-  // ⚡ Simulated Auto Beat Detection
   const handleAutoDetect = async () => {
     setLoading(true);
     setProgress(0);
@@ -45,11 +43,10 @@ export default function BeatAdder({ file, onApply, onCancel }) {
 
     const totalSteps = 100;
     for (let i = 0; i <= totalSteps; i++) {
-      await new Promise((res) => setTimeout(res, 20));
+      await new Promise((r) => setTimeout(r, 15));
       setProgress(i);
     }
 
-    // Mock beats based on intensity
     const duration = wavesurfer.current?.getDuration() || 60;
     const beatCount = Math.floor(duration * intensity * 2);
     const newBeats = Array.from({ length: beatCount }, () =>
@@ -60,7 +57,6 @@ export default function BeatAdder({ file, onApply, onCancel }) {
     setLoading(false);
   };
 
-  // ✋ Manual Beat Placement
   const handleWaveClick = (e) => {
     if (mode !== "manual" || !wavesurfer.current) return;
     const duration = wavesurfer.current.getDuration();
@@ -87,10 +83,10 @@ export default function BeatAdder({ file, onApply, onCancel }) {
   };
 
   return (
-    <div className="flex flex-col gap-4 p-4 bg-white rounded-2xl shadow-md w-full max-w-3xl mx-auto">
+    <div className="flex flex-col gap-4 p-4 bg-gray-900 rounded-xl shadow-lg w-full max-w-3xl mx-auto text-white">
       {/* Header */}
       <div className="flex justify-between items-center">
-        <h2 className="text-lg font-semibold text-gray-800 truncate">
+        <h2 className="text-lg font-semibold truncate">
           {file?.name || "No file selected"}
         </h2>
         <div className="flex items-center gap-2">
@@ -124,7 +120,7 @@ export default function BeatAdder({ file, onApply, onCancel }) {
       {/* Auto Mode */}
       {mode === "auto" && (
         <div className="flex flex-col items-center gap-4">
-          <label className="text-sm text-gray-600">Beat Intensity</label>
+          <label className="text-sm text-gray-400">Beat Intensity</label>
           <input
             type="range"
             min="0.1"
@@ -144,9 +140,8 @@ export default function BeatAdder({ file, onApply, onCancel }) {
       <div
         ref={waveformRef}
         onClick={handleWaveClick}
-        className="relative border rounded-md cursor-pointer"
+        className="relative border border-gray-700 rounded-md cursor-pointer"
       >
-        {/* Red beat markers */}
         {(mode === "auto" ? autoBeats : manualBeats).map((t, i) => (
           <div
             key={i}

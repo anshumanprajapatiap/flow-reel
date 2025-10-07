@@ -1,201 +1,159 @@
-import { useState, useRef } from "react";
+import React, { useState } from "react";
+import { motion, AnimatePresence } from "framer-motion";
 import {
-  ZoomIn,
-  ZoomOut,
   Scissors,
-  Star,
   Trash2,
   Crop,
+  RotateCcw,
+  Music,
+  Film,
+  Zap,
+  Download,
   Copy,
-  Volume2,
-  Layers,
-  Video,
-  AudioLines,
-  Type,
+  Lock,
+  Key,
+  Plus,
 } from "lucide-react";
 
-export default function Timeline({ onAudioClick }) {
+export default function Timeline() {
+  const [selectedClip, setSelectedClip] = useState(null);
   const [zoom, setZoom] = useState(1);
-  const scrollRef = useRef(null);
 
-  const clips = [
-    { id: 1, label: "Clip 1", duration: 2.5, thumbnail: "/thumb1.jpg" },
-    { id: 2, label: "Clip 2", duration: 1.8, thumbnail: "/thumb2.jpg" },
-    { id: 3, label: "Clip 3", duration: 2.7, thumbnail: "/thumb3.jpg" },
-    { id: 4, label: "Clip 4", duration: 1.5, thumbnail: "/thumb4.jpg" },
+  // add more tracks to test vertical scroll
+  const tracks = [
+    { id: "video", name: "Video Track", type: "video" },
+    { id: "audio", name: "Audio Track", type: "audio" },
+    { id: "fx", name: "Effects Track", type: "fx" },
+    { id: "voice", name: "Voice Track", type: "audio" },
+    { id: "overlay", name: "Overlay", type: "video" },
+    { id: "caption", name: "Captions", type: "text" },
   ];
 
-  const handleZoom = (delta) => {
-    setZoom((z) => Math.min(Math.max(z + delta, 0.5), 2));
+  const clips = [
+    { id: 1, track: "video", name: "Intro Clip", start: 0, duration: 4 },
+    { id: 2, track: "video", name: "Main Scene", start: 5, duration: 6 },
+    { id: 3, track: "audio", name: "BGM", start: 0, duration: 10 },
+    { id: 4, track: "voice", name: "Narration", start: 3, duration: 5 },
+  ];
+
+  const handleSelectClip = (id) => {
+    setSelectedClip(selectedClip === id ? null : id);
   };
 
-  const handleAudioTrackClick = (index) => {
-    const fakeAudio = {
-      id: index,
-      name: `Audio Track ${index + 1}`,
-      url: `/audio/track${index + 1}.mp3`,
-    };
-    if (onAudioClick) onAudioClick(fakeAudio);
+  const handleAction = (action) => {
+    console.log(`Action triggered: ${action} on clip ${selectedClip}`);
+  };
+
+  const handleZoom = (dir) => {
+    setZoom((z) => Math.max(0.5, Math.min(3, z + dir * 0.25)));
   };
 
   return (
-    <div className="bg-timeline flex flex-col bg-[#121212] border-t border-gray-800 text-white h-[40vh]">
-      {/* Top control bar */}
-      <div className="flex items-center justify-between px-4 py-2 bg-[#1a1a1a] border-b border-gray-800">
-        <div className="flex items-center gap-2 text-sm text-gray-300">
-          <Layers size={18} /> <span>Timeline</span>
-        </div>
-        <div className="flex items-center gap-3">
-          <button onClick={() => handleZoom(-0.1)} className="hover:text-blue-400">
-            <ZoomOut size={18} />
+    <div className="flex flex-col h-screen bg-[#0f0f0f] text-gray-200">
+      {/* Timeline Header */}
+      <div className="flex items-center justify-between px-6 py-3 border-b border-gray-800 bg-[#1a1a1a]">
+        <h2 className="text-lg font-semibold">🎬 Timeline Editor</h2>
+        <div className="flex gap-2">
+          <button onClick={() => handleZoom(-1)} className="px-2 py-1 rounded bg-gray-800 hover:bg-gray-700">
+            -
           </button>
-          <button onClick={() => handleZoom(0.1)} className="hover:text-blue-400">
-            <ZoomIn size={18} />
+          <span className="text-sm">{zoom.toFixed(2)}x</span>
+          <button onClick={() => handleZoom(1)} className="px-2 py-1 rounded bg-gray-800 hover:bg-gray-700">
+            +
           </button>
         </div>
       </div>
 
-      {/* Ruler */}
-      <div className="flex items-center text-[10px] text-gray-400 px-4 py-1 bg-[#181818]">
-        {Array.from({ length: 60 }).map((_, i) => (
-          <div key={i} className="w-[40px] flex-shrink-0 text-center">
-            {i % 5 === 0 ? `${i}s` : ""}
+      {/* Timeline Tracks */}
+      <div className="flex-1 overflow-y-auto overflow-x-auto p-4 space-y-3">
+        {tracks.map((track) => (
+          <div key={track.id}>
+            <div className="text-[11px] uppercase mb-1 text-gray-400 font-medium tracking-wide">
+              {track.name}
+            </div>
+            <div className="relative h-10 bg-gray-900 rounded-md flex items-center px-2 overflow-hidden">
+              {/* Track grid */}
+              <div className="absolute inset-0 grid grid-cols-20">
+                {[...Array(20)].map((_, i) => (
+                  <div key={i} className="border-r border-gray-800" />
+                ))}
+              </div>
+
+              {/* Clips */}
+              <div className="relative flex w-full h-full">
+                {clips
+                  .filter((clip) => clip.track === track.id)
+                  .map((clip) => (
+                    <motion.div
+                      key={clip.id}
+                      onClick={() => handleSelectClip(clip.id)}
+                      className={`absolute top-1/2 -translate-y-1/2 text-[10px] font-medium cursor-pointer rounded border ${
+                        selectedClip === clip.id
+                          ? "bg-blue-600 border-blue-400"
+                          : "bg-gray-700 border-gray-600 hover:bg-gray-600"
+                      }`}
+                      style={{
+                        left: `${clip.start * 40 * zoom}px`,
+                        width: `${clip.duration * 40 * zoom}px`,
+                      }}
+                      whileHover={{ scale: 1.02 }}
+                    >
+                      <div className="px-2 py-1 truncate">{clip.name}</div>
+                    </motion.div>
+                  ))}
+
+                {/* Add clip button */}
+                <div className="absolute right-2">
+                  <button className="bg-gray-800 hover:bg-gray-700 p-1 rounded-full">
+                    <Plus size={12} />
+                  </button>
+                </div>
+              </div>
+            </div>
           </div>
         ))}
       </div>
 
-      {/* Scrollable timeline */}
-      <div
-        ref={scrollRef}
-        className="flex-1 overflow-x-auto overflow-y-auto scrollbar-thin scrollbar-thumb-gray-700 scrollbar-track-gray-900"
-      >
-        <div
-          className="min-w-[1600px] relative"
-          style={{ transform: `scaleX(${zoom})`, transformOrigin: "left center" }}
-        >
-          {/* Video Tracks */}
-          <Track type="video">
-            {clips.map((c) => (
-              <Clip key={c.id} clip={c} />
-            ))}
-          </Track>
-          <Track type="video">
-            {clips.map((c) => (
-              <Clip key={c.id} clip={{ ...c, label: "Overlay" }} />
-            ))}
-          </Track>
-
-          {/* Audio Tracks */}
-          <Track
-            type="audio"
-            waveform
-            onClick={() => handleAudioTrackClick(0)}
-          />
-          <Track
-            type="audio"
-            waveform
-            onClick={() => handleAudioTrackClick(1)}
-          />
-
-          {/* Text Track */}
-          <Track type="text">
-            <div className="bg-yellow-600 text-xs px-2 py-1 rounded">Title Text</div>
-          </Track>
-          <Track type="text">
-            <div className="bg-pink-600 text-xs px-2 py-1 rounded">Subtitles</div>
-          </Track>
-        </div>
-      </div>
-
-      {/* Bottom toolbar */}
-      <Toolbar />
-    </div>
-  );
-}
-
-// --- Track Component ---
-function Track({ type, children, waveform, onClick }) {
-  const getIcon = () => {
-    switch (type) {
-      case "video":
-        return <Video size={16} className="text-blue-400" />;
-      case "audio":
-        return <AudioLines size={16} className="text-green-400" />;
-      case "text":
-        return <Type size={16} className="text-pink-400" />;
-      default:
-        return null;
-    }
-  };
-
-  return (
-    <div
-      onClick={onClick}
-      className={`bg-panel relative border-b border-gray-800 h-[44px] flex items-center px-3 transition ${
-        waveform ? "cursor-pointer hover:bg-[#1f1f1f]" : ""
-      }`}
-    >
-      <div className="w-10 flex items-center justify-center bg-[#1c1c1c] border-r border-gray-700 rounded-l">
-        {getIcon()}
-      </div>
-      <div className="flex-1 flex items-center gap-2 overflow-hidden">
-        {waveform ? (
-          <div className="flex-1 h-[30px] bg-gradient-to-t from-gray-800 to-gray-700 rounded relative overflow-hidden">
-            {/* fake waveform */}
-            <div className="absolute inset-0 flex items-end gap-[1px] px-1">
-              {Array.from({ length: 120 }).map((_, i) => (
-                <div
-                  key={i}
-                  className="w-[2px] bg-green-500/40 rounded"
-                  style={{ height: `${Math.random() * 100}%` }}
-                ></div>
-              ))}
-            </div>
-            <div className="absolute inset-0 flex items-center justify-center text-gray-400 text-xs opacity-0 hover:opacity-100 transition">
-              🎵 Click to Edit Beats
-            </div>
-          </div>
-        ) : (
-          children
+      {/* Floating Clip Toolbar */}
+      <AnimatePresence>
+        {selectedClip && (
+          <motion.div
+            className="fixed bottom-24 left-1/2 -translate-x-1/2 flex items-center gap-4 bg-[#1c1c1c] border border-gray-800 px-6 py-2 rounded-full shadow-lg backdrop-blur-md"
+            initial={{ opacity: 0, y: 50 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: 50 }}
+          >
+            <button onClick={() => handleAction("keyframe")}><Key size={18} /></button>
+            <button onClick={() => handleAction("beat")}><Zap size={18} /></button>
+            <button onClick={() => handleAction("lock")}><Lock size={18} /></button>
+            <button onClick={() => handleAction("duplicate")}><Copy size={18} /></button>
+            <button onClick={() => handleAction("delete")}><Trash2 size={18} /></button>
+          </motion.div>
         )}
+      </AnimatePresence>
+
+      {/* Persistent Bottom Toolbar */}
+      <div className="fixed bottom-0 w-full border-t border-gray-800 bg-[#1a1a1a] py-3 flex justify-around text-sm text-gray-300">
+        <ToolbarButton icon={<Scissors size={18} />} label="Trim" onClick={() => handleAction("trim")} />
+        <ToolbarButton icon={<Film size={18} />} label="Split" onClick={() => handleAction("split")} />
+        <ToolbarButton icon={<Trash2 size={18} />} label="Delete" onClick={() => handleAction("delete")} />
+        <ToolbarButton icon={<Crop size={18} />} label="Crop" onClick={() => handleAction("crop")} />
+        <ToolbarButton icon={<RotateCcw size={18} />} label="Rotate" onClick={() => handleAction("rotate")} />
+        <ToolbarButton icon={<Music size={18} />} label="Audio" onClick={() => handleAction("audio")} />
+        <ToolbarButton icon={<Zap size={18} />} label="Speed" onClick={() => handleAction("speed")} />
+        <ToolbarButton icon={<Zap size={18} />} label="FX" onClick={() => handleAction("fx")} />
+        <ToolbarButton icon={<Download size={18} />} label="Export" onClick={() => handleAction("export")} />
       </div>
     </div>
   );
 }
 
-// --- Clip Component ---
-function Clip({ clip }) {
+function ToolbarButton({ icon, label, onClick }) {
   return (
-    <div
-      className="relative flex-shrink-0 bg-gray-700 hover:bg-gray-600 rounded-md overflow-hidden cursor-pointer shadow-md"
-      style={{ width: `${clip.duration * 120}px`, height: "30px" }}
+    <button
+      onClick={onClick}
+      className="flex flex-col items-center justify-center hover:text-blue-400 transition"
     >
-      <img src={clip.thumbnail} alt="" className="w-full h-full object-cover opacity-70" />
-      <div className="absolute bottom-0 left-0 right-0 bg-black/60 text-[9px] px-1 py-[1px] flex justify-between">
-        <span>{clip.label}</span>
-        <span>{clip.duration.toFixed(2)}s</span>
-      </div>
-    </div>
-  );
-}
-
-// --- Toolbar Component ---
-function Toolbar() {
-  return (
-    <div className="flex items-center justify-center gap-8 py-2 bg-[#1a1a1a] border-t border-gray-800 text-gray-300 text-xs">
-      <Tool icon={<Scissors size={16} />} label="Trim" />
-      <Tool icon={<Star size={16} />} label="FX" />
-      <Tool icon={<Copy size={16} />} label="Duplicate" />
-      <Tool icon={<Crop size={16} />} label="Crop" />
-      <Tool icon={<Trash2 size={16} />} label="Delete" />
-      <Tool icon={<Volume2 size={16} />} label="Audio" />
-    </div>
-  );
-}
-
-function Tool({ icon, label }) {
-  return (
-    <button className="flex flex-col items-center hover:text-blue-400 transition">
       {icon}
       <span className="text-[10px] mt-1">{label}</span>
     </button>
