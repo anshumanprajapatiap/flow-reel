@@ -1,0 +1,24 @@
+version: "3.9"
+
+services:
+  backend:
+    build: ./flow-reel-backend
+    container_name: flow-reel-backend
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./flow-reel-backend:/app
+    environment:
+      - TZ=Asia/Kolkata
+
+  ui:
+    build: ./flow-reel-ui
+    container_name: flow-reel-ui
+    ports:
+      - "5173:5173"
+    depends_on:
+      - api
+    environment:
+      - VITE_API_URL=http://localhost:8000
+    volumes:
+      - ./flow-reel-ui:/app

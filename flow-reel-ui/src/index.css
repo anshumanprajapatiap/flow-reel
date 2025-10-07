@@ -1,0 +1,32 @@
+@import "tailwindcss";
+
+
+
+/* Optional: Make scrollbar thinner and subtle */
+::-webkit-scrollbar {
+  height: 6px;
+  width: 6px;
+}
+::-webkit-scrollbar-thumb {
+  background-color: rgba(100, 100, 100, 0.5);
+  border-radius: 4px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background-color: rgba(150, 150, 150, 0.7);
+}
+
+/* Tailwind additions (or globals.css) */
+.bg-panel {
+  @apply bg-gradient-to-b from-[#1c1c1e] to-[#101011] backdrop-blur-md border border-gray-800/50;
+}
+
+.bg-toolbar {
+  @apply bg-gradient-to-b from-[#202124] to-[#141414] shadow-md border-b border-gray-700/40;
+}
+
+.bg-timeline {
+  @apply bg-[#0f0f10]/80 backdrop-blur-sm border-t border-gray-800/50;
+}
+.text-muted {
+  @apply text-gray-400;
+}
