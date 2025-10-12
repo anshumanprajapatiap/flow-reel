@@ -1,7 +1,7 @@
 from fastapi import APIRouter, HTTPException
 import os, json
 
-router = APIRouter()
+router = APIRouter(prefix="/user", tags=["User"])
 
 USERS_FILE = "data/users.json"
 os.makedirs("data", exist_ok=True)
@@ -22,7 +22,7 @@ def write_users(users):
         json.dump(users, f, indent=2)
 
 
-@router.post("/user/add")
+@router.post("/")
 async def add_user(user: dict):
     """
     Adds a user to the local file-based store.
@@ -34,9 +34,17 @@ async def add_user(user: dict):
     """
     users = read_users()
     user_id = user.get("id")
+    name = user.get("name")
+    password = user.get("password")
 
     if not user_id:
-        raise HTTPException(status_code=400, detail="User ID missing")
+        raise HTTPException(status_code=400, detail="id missing")
+    
+    if not name:
+        raise HTTPException(status_code=400, detail="name missing")
+    
+    if not user_id:
+        raise HTTPException(status_code=400, detail="pasword missing")
 
     if user_id in users:
         return {"status": "exists", "message": "User already exists"}
@@ -46,7 +54,7 @@ async def add_user(user: dict):
     return {"status": "success", "user": user}
 
 
-@router.get("/user/{user_id}")
+@router.get("/{user_id}")
 async def get_user(user_id: str):
     """
     Get user info by ID

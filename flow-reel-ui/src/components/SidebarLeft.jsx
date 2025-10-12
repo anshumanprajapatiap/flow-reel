@@ -37,7 +37,7 @@ export default function SidebarLeft({ userId, projectId }) {
 
     const fetchMedia = async () => {
       try {
-        const url = `http://localhost:8000/media?user_id=${userId}${
+        const url = `http://localhost:8000/api/media?user_id=${userId}${
           projectId ? `&project_id=${projectId}` : ""
         }`;
         const res = await fetch(url);
@@ -63,7 +63,7 @@ export default function SidebarLeft({ userId, projectId }) {
       formData.append("project_id", projectId || "");
       formData.append("type", type);
 
-      const res = await fetch("http://localhost:8000/media/upload", {
+      const res = await fetch("http://localhost:8000/api/media/upload", {
         method: "POST",
         body: formData,
       });
@@ -83,7 +83,7 @@ export default function SidebarLeft({ userId, projectId }) {
     if (!window.confirm("Are you sure you want to delete this file?")) return;
 
     try {
-      const res = await fetch(`http://localhost:8000/media/${mediaId}`, {
+      const res = await fetch(`http://localhost:8000/api/media/${mediaId}`, {
         method: "DELETE",
       });
       if (!res.ok) throw new Error(await res.text());
@@ -99,7 +99,7 @@ export default function SidebarLeft({ userId, projectId }) {
     if (!window.confirm("⚠️ Delete all your uploaded media?")) return;
     try {
       const res = await fetch(
-        `http://localhost:8000/media/user/${userId}/cleanup`,
+        `http://localhost:8000/api/media/user/${userId}/cleanup`,
         { method: "DELETE" }
       );
       if (!res.ok) throw new Error(await res.text());

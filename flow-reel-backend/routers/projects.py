@@ -4,7 +4,7 @@ import os
 import json
 import time
 
-router = APIRouter(prefix="/projects", tags=["Projects"])
+router = APIRouter(prefix="/project", tags=["Project"])
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 PROJECT_ROOT = os.path.dirname(BASE_DIR)
@@ -27,15 +27,17 @@ def get_project_path(user_id: str, project_id: str):
 # -----------------------------
 # 1️⃣ Create Project
 # -----------------------------
-@router.post("/create")
+@router.post("/")
 async def create_project(
     user_id: str = Form(...),
     project_name: str = Form(...),
     project_id: Optional[str] = None,
-):
+):  
+    server_time = int(time.time())  # ✅ ensure timestamp is server-side
+    
     """Create a new project JSON for the user"""
     if not project_id:
-        project_id = f"{project_name.lower().replace(' ', '_')}_{int(time.time())}"
+        project_id = f"{project_name.lower().replace(' ', '_')}_{server_time}"
 
     project_path = get_project_path(user_id, project_id)
 
@@ -45,8 +47,9 @@ async def create_project(
     project_data = {
         "project_name": project_name,
         "project_id": project_id,
-        "created_at": int(time.time()),
+        "created_at": server_time,
         "audios": {},
+        "videos": {}
     }
 
     with open(project_path, "w") as f:
@@ -134,3 +137,22 @@ async def get_project_details(user_id: str, project_id: str):
 
     with open(project_path, "r") as f:
         return json.load(f)
+
+
+
+# -----------------------------
+# 5 Delete project
+# -----------------------------
+@router.delete("/{user_id}/{project_id}")
+async def delete_project(user_id: str, project_id: str):
+    """Delete a project and its JSON data"""
+    project_path = get_project_path(user_id, project_id)
+    
+    if not os.path.exists(project_path):
+        raise HTTPException(status_code=404, detail="Project not found")
+
+    try:
+        os.remove(project_path)
+        return {"message": "Project deleted successfully", "project_id": project_id}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to delete project: {str(e)}")

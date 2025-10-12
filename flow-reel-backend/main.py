@@ -15,10 +15,10 @@ app.add_middleware(
 )
 
 
-app.include_router(user.router, prefix="/api", tags=["User"])
-app.include_router(projects.router, prefix="/api", tags=["Project"])
-app.include_router(media.router, prefix="/api", tags=["Media"])
-app.include_router(audio.router, prefix="/api", tags=["Audio"])
+app.include_router(user.router, prefix="/api")
+app.include_router(projects.router, prefix="/api")
+app.include_router(media.router, prefix="/api")
+app.include_router(audio.router, prefix="/api")
 
 @app.on_event("startup")
 def on_startup():
@@ -26,4 +26,4 @@ def on_startup():
 
 @app.get("/")
 def root():
-    return {"message": "Flow Reel API running 🚀"}
+    return {"message": "Flow Reel API running 🚀", "details": "docs - /docs"}

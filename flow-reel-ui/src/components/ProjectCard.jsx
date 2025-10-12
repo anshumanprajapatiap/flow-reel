@@ -1,14 +1,36 @@
 import React from "react";
 import { useNavigate } from "react-router-dom";
+import { Delete } from "lucide-react";
+import { deleteProject } from "../api/projectService";
 
-const ProjectCard = ({ project }) => {
+const ProjectCard = ({ project, userId, onDelete }) => {
   const navigate = useNavigate();
+
+  const handleDelete = async (e) => {
+    e.stopPropagation(); // prevent navigation
+    if (window.confirm(`Delete project "${project.name}"?`)) {
+      try {
+        await deleteProject(userId, project.id);
+        if (onDelete) onDelete(project.id); // optional callback for parent refresh
+      } catch (error) {
+        alert("Failed to delete project. Check console for details.");
+      }
+    }
+  };
 
   return (
     <div
       onClick={() => navigate(`/editor/${project.id}`)}
-      className="p-4 bg-gray-800 rounded-xl cursor-pointer hover:bg-gray-700 hover:shadow-lg transition-all duration-200"
+      className="relative p-4 bg-gray-800 rounded-xl cursor-pointer hover:bg-gray-700 hover:shadow-lg transition-all duration-200"
     >
+      {/* Delete button (top-right corner) */}
+      <button
+        onClick={handleDelete}
+        className="absolute top-2 right-2 bg-red-600 hover:bg-red-700 text-white text-xs px-2 py-1 rounded"
+      >
+        <Delete></Delete>
+      </button>
+
       {/* Thumbnail */}
       <div className="h-36 bg-gray-700 rounded-lg mb-3 flex items-center justify-center text-gray-400 text-sm">
         {project.thumbnail ? (

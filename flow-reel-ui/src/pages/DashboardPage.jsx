@@ -2,6 +2,8 @@ import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { User } from "lucide-react";
 
+
+import { listUserProjects, createProject, deleteProject } from "../api/projectService"
 import ProjectCard from "../components/ProjectCard";
 import ProfileDropdown from "../components/ProfileDropdown";
 
@@ -16,15 +18,12 @@ export default function DashboardPage() {
   const user = JSON.parse(localStorage.getItem("flowreel_user"));
   const userId = user?.id;
 
-  console.log("User ID:", userId);
-  const API_BASE = import.meta.env.VITE_API_URL || "http://localhost:8000";
-
   // Fetch user projects on load
   useEffect(() => {
     const fetchProjects = async () => {
       try {
-        const res = await fetch(`${API_BASE}/projects/${userId}`);
-        const data = await res.json();
+
+        const data = await listUserProjects(userId);
         setProjects(data.projects || []);
       } catch (err) {
         setError("Failed to fetch projects");
@@ -43,18 +42,7 @@ export default function DashboardPage() {
 
     setCreating(true);
     try {
-      const formData = new FormData();
-      formData.append("user_id", userId);
-      formData.append("project_name", name);
-
-      const res = await fetch(`${API_BASE}/projects/create`, {
-        method: "POST",
-        body: formData,
-      });
-
-      if (!res.ok) throw new Error("Failed to create project");
-
-      const data = await res.json();
+      const data = await createProject(userId, name);
       setProjects((prev) => [...prev, data.project_id]);
       navigate(`/editor/${data.project_id}`);
     } catch (err) {
@@ -64,6 +52,10 @@ export default function DashboardPage() {
       setCreating(false);
     }
   };
+
+  const handleProjectDelete = (deletedId) => {
+  setProjects((prev) => prev.filter((p) => p.id !== deletedId));
+};
 
   return (
     <div>
@@ -106,7 +98,7 @@ export default function DashboardPage() {
       ) : (
         <div className="grid grid-cols-3 gap-4">
           {projects.map((project) => (
-            <ProjectCard key={project.id} project={project} />
+            <ProjectCard key={project.id} project={project} userId={userId} onDelete={handleProjectDelete}/>
           ))}
         </div>
       )}
