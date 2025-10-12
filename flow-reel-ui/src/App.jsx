@@ -23,10 +23,10 @@ export default function App() {
     <div className="relative min-w-[938px] min-h-[700px] w-full h-screen bg-gray-900 text-white overflow-auto">
       <BrowserRouter>
         <Routes>
-          <Route path="/login" element={<LoginPage />} />
+          <Route path="/" element={<LoginPage />} />
 
           <Route
-            path=""
+            path="/dashboard"
             element={
               <ProtectedRoute>
                 <DashboardPage />

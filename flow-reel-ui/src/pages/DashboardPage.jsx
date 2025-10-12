@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { User } from "lucide-react";
 
 import ProjectCard from "../components/ProjectCard";
+import ProfileDropdown from "../components/ProfileDropdown";
 
 export default function DashboardPage() {
   const navigate = useNavigate();
@@ -75,7 +76,7 @@ export default function DashboardPage() {
         
         <div className="flex justify-between gap-5">
             <button
-              className={`bg-blue-600 px-4 py-2 rounded hover:bg-blue-700 ${
+              className={`bg-blue-600 px-4 py-2 rounded-full hover:bg-blue-700 ${
                 creating ? "opacity-60 cursor-wait" : ""
               }`}
               onClick={handleCreateProject}
@@ -83,15 +84,17 @@ export default function DashboardPage() {
             >
               {creating ? "Creating..." : "+ New Project"}
             </button>
-
-            <button className="flex items-center gap-1 px-3 py-1 bg-red-600 rounded hover:bg-red-700 text-sm"
-              onClick={ () => navigate("/") }
-            >
-              <User size={16} /> Logout
-            </button>
+            
+            <ProfileDropdown></ProfileDropdown>
         </div>
         
       </div>
+
+
+      <div className="w-full bg-gradient-to-r from-amber-500 via-orange-500 to-yellow-500 text-white text-center py-4 text-2xl font-semibold shadow-lg rounded-b-2xl">
+        Welcome {userId}
+      </div>
+
 
       {/* Loading & Error States */}
       {loading ? (

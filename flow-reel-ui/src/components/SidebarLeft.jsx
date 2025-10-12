@@ -17,6 +17,16 @@ export default function SidebarLeft({ userId, projectId }) {
   const [mediaList, setMediaList] = useState([]);
   const [uploading, setUploading] = useState(false);
 
+  const handleDragStart = (e, media) => {
+    e.dataTransfer.setData('application/json', JSON.stringify({
+      id: media.id,
+      type: media.type,
+      src: media.url,
+      name: media.name,
+      duration: media.duration || 5,
+    }));
+  };
+
   // Refs for file inputs (so we can trigger them from buttons)
   const videoInputRef = useRef(null);
   const audioInputRef = useRef(null);

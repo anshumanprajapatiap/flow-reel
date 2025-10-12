@@ -35,9 +35,11 @@ services:
     depends_on:
       - backend
     environment:
-      - VITE_API_URL=http://localhost:8000
+      - CHOKIDAR_USEPOLLING=true
+      - VITE_API_URL=http://localhost:8000/api
     volumes:
       - ./flow-reel-ui:/app
+      - /app/node_modules
     command: npm run dev -- --host
 
 volumes:

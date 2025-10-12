@@ -1,4 +1,4 @@
-import { useState, useRef } from "react";
+import { useState } from "react";
 import { useParams } from "react-router-dom";
 import { AnimatePresence, motion } from "framer-motion";
 
@@ -8,6 +8,7 @@ import SidebarRight from "../components/SidebarRight";
 import PreviewScreen from "../components/PreviewScreen";
 import Timeline from "../components/Timeline";
 import BeatAdder from "../components/BeatAdder";
+import { TimelineProvider } from '../context/TimelineContext';
 
 export default function EditorPage() {
   const { projectId } = useParams();
@@ -15,10 +16,6 @@ export default function EditorPage() {
   // ✅ Fetch user from localStorage
   const user = JSON.parse(localStorage.getItem("flowreel_user"));
   const userId = user?.id;
-
-  // ✅ Video ref & playback state
-  const videoRef = useRef(null);
-  const [isPlaying, setIsPlaying] = useState(false);
 
   // ✅ Beat Adder Modal
   const [beatModalClip, setBeatModalClip] = useState(null);
@@ -35,67 +32,60 @@ export default function EditorPage() {
   };
 
   return (
-    <div className="flex flex-col h-screen bg-gray-900 text-white overflow-hidden">
-      <TopBar />
+    <TimelineProvider>
+      <div className="flex flex-col h-screen bg-gray-900 text-white overflow-hidden">
+        <TopBar />
 
-      {/* Main container */}
-      <div className="flex flex-col flex-1">
-        {/* TOP SECTION (60% height of viewport) */}
-        <div className="flex w-full" style={{ height: "60vh" }}>
-          <SidebarLeft userId={userId} projectId={projectId} />
+        {/* Main container */}
+        <div className="flex flex-col flex-1">
+          {/* TOP SECTION (60% height of viewport) */}
+          <div className="flex w-full" style={{ height: "60vh" }}>
+            <SidebarLeft userId={userId} projectId={projectId} />
 
-          <div className="flex-1 flex flex-col items-stretch overflow-hidden">
-            <PreviewScreen
-              videoRef={videoRef}
-              isPlaying={isPlaying}
-              setIsPlaying={setIsPlaying}
-            />
+            <div className="flex-1 flex flex-col items-stretch overflow-hidden">
+              <PreviewScreen />
+            </div>
+
+            <SidebarRight />
           </div>
 
-          <SidebarRight />
-        </div>
-
-        {/* BOTTOM SECTION (40% height of viewport) */}
-        <div
-          className="w-full border-t border-gray-800 bg-amber-50"
-          style={{ height: "40vh" }}
-        >
-          <Timeline
-            videoRef={videoRef}
-            isPlaying={isPlaying}
-            setIsPlaying={setIsPlaying}
-            onOpenBeatPanel={openBeatModal}
-          />
-        </div>
-      </div>
-
-      {/* BeatAdder Modal */}
-      <AnimatePresence>
-        {isBeatAdderOpen && (
-          <motion.div
-            className="absolute inset-0 bg-black/70 z-50 flex items-center justify-center"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
+          {/* BOTTOM SECTION (40% height of viewport) */}
+          <div
+            className="w-full border-t border-gray-800 bg-[#0f0f0f]"
+            style={{ height: "40vh" }}
           >
+            <Timeline onOpenBeatPanel={openBeatModal} />
+          </div>
+        </div>
+
+        {/* BeatAdder Modal */}
+        <AnimatePresence>
+          {isBeatAdderOpen && (
             <motion.div
-              initial={{ y: 40, opacity: 0, scale: 0.98 }}
-              animate={{ y: 0, opacity: 1, scale: 1 }}
-              exit={{ y: 40, opacity: 0, scale: 0.98 }}
-              className="w-[80%] h-[80%] bg-gray-800 rounded-2xl border border-gray-700 shadow-2xl overflow-hidden"
+              className="absolute inset-0 bg-black/70 z-50 flex items-center justify-center"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
             >
-              <BeatAdder
-                file={beatModalClip}
-                onApply={(beats) => {
-                  console.log("Beats saved:", beats);
-                  closeBeatModal();
-                }}
-                onCancel={closeBeatModal}
-              />
+              <motion.div
+                initial={{ y: 40, opacity: 0, scale: 0.98 }}
+                animate={{ y: 0, opacity: 1, scale: 1 }}
+                exit={{ y: 40, opacity: 0, scale: 0.98 }}
+                className="w-[80%] h-[80%] bg-gray-800 rounded-2xl border border-gray-700 shadow-2xl overflow-hidden"
+              >
+                <BeatAdder
+                  file={beatModalClip}
+                  onApply={(beats) => {
+                    console.log("Beats saved:", beats);
+                    closeBeatModal();
+                  }}
+                  onCancel={closeBeatModal}
+                />
+              </motion.div>
             </motion.div>
-          </motion.div>
-        )}
-      </AnimatePresence>
-    </div>
+          )}
+        </AnimatePresence>
+      </div>
+    </TimelineProvider>
   );
 }

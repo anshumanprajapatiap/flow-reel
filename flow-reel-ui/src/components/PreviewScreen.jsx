@@ -1,7 +1,10 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Maximize2, Minimize2, Play, Pause } from "lucide-react";
+import { useTimeline } from "../context/TimelineContext";
 
-export default function PreviewScreen({ videoRef, isPlaying, setIsPlaying }) {
+export default function PreviewScreen() {
+  const videoRef = useRef(null);
+  const { tracks, currentTime, isPlaying, setPlaying } = useTimeline();
   const [aspect, setAspect] = useState("9:16");
   const [fullscreen, setFullscreen] = useState(false);
 

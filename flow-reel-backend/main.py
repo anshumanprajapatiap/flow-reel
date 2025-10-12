@@ -16,9 +16,9 @@ app.add_middleware(
 
 
 app.include_router(user.router, prefix="/api", tags=["User"])
-app.include_router(projects.router)
-app.include_router(media.router)
-app.include_router(audio.router)
+app.include_router(projects.router, prefix="/api", tags=["Project"])
+app.include_router(media.router, prefix="/api", tags=["Media"])
+app.include_router(audio.router, prefix="/api", tags=["Audio"])
 
 @app.on_event("startup")
 def on_startup():
