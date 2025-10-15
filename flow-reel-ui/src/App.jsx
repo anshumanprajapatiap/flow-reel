@@ -6,6 +6,15 @@ import DashboardPage from "./pages/DashboardPage";
 import LoginPage from "./pages/LoginPage";
 import ProtectedRoute from "./components/ProtectedRoute";
 
+import { Toaster } from "./components/ui/toaster";
+import { Toaster as Sonner } from "./components/ui/sonner";
+import { TooltipProvider } from "./components/ui/tooltip";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import Index from "./pages/Index";
+import NotFound from "./pages/NotFound";
+
+const queryClient = new QueryClient();
+
 export default function App() {
   const [isTooSmall, setIsTooSmall] = useState(false);
 
@@ -21,62 +30,42 @@ export default function App() {
 
   return (
     <div className="relative min-w-[938px] min-h-[700px] w-full h-screen bg-gray-900 text-white overflow-auto">
-      <BrowserRouter>
-        <Routes>
-          <Route path="/" element={<LoginPage />} />
+      <QueryClientProvider client={queryClient}>
+        <TooltipProvider>
+          {/* <Toaster>
+            <Sonner>
+              
+            </Sonner>
+          </Toaster> */}
+          <BrowserRouter>
+                <Routes>
+                  <Route path="/" element={<Index />} />
+                  {/* <Route path="/" element={<LoginPage />} /> */}
 
-          <Route
-            path="/dashboard"
-            element={
-              <ProtectedRoute>
-                <DashboardPage />
-              </ProtectedRoute>
-            }
-          />
+                  <Route
+                    path="/dashboard"
+                    element={
+                      <ProtectedRoute>
+                        <DashboardPage />
+                      </ProtectedRoute>
+                    }
+                  />
 
-          <Route
-            path="/editor/:projectId"
-            element={
-              <ProtectedRoute>
-                <EditorPage />
-              </ProtectedRoute>
-            }
-          />
-        </Routes>
-      </BrowserRouter>
+                  <Route
+                    path="/editor/:projectId"
+                    element={
+                      <ProtectedRoute>
+                          <EditorPage />
+                      </ProtectedRoute>
+                    }
+                  />
 
-      {/* Animated small screen overlay */}
-      <AnimatePresence>
-        {isTooSmall && (
-          <motion.div
-            key="small-screen-overlay"
-            className="absolute inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-50"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-          >
-            <motion.div
-              className="bg-gray-800 p-6 rounded-2xl shadow-2xl text-center max-w-sm border border-gray-700"
-              initial={{ y: 100, opacity: 0, scale: 0.95 }}
-              animate={{ y: 0, opacity: 1, scale: 1 }}
-              exit={{ y: 100, opacity: 0, scale: 0.95 }}
-              transition={{ type: "spring", stiffness: 120, damping: 12 }}
-            >
-              <h1 className="text-2xl font-bold mb-3 text-red-400">
-                ⚠️ Screen Too Small
-              </h1>
-              <p className="text-gray-300 mb-2">Minimum required size:</p>
-              <p className="text-blue-400 font-semibold mb-4">
-                938 × 700 pixels
-              </p>
-              <p className="text-gray-400 text-sm">
-                Resize your window or use a larger display for the best
-                editing experience.
-              </p>
-            </motion.div>
-          </motion.div>
-        )}
-      </AnimatePresence>
+                  <Route path="*" element={<NotFound />} />
+                </Routes>
+          </BrowserRouter>
+        </TooltipProvider>
+      </QueryClientProvider>
+      
     </div>
   );
 }

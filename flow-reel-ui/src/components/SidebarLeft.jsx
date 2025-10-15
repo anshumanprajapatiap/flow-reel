@@ -11,12 +11,28 @@ import {
 } from "lucide-react";
 import MediaFiles from "./MediaFiles";
 import { Button } from "./ui/button";
+import {
+  fetchMedia,
+  uploadMedia,
+  deleteMedia,
+  cleanupUserMedia,
+} from "../api/media";
 
 export default function SidebarLeft({ userId, projectId }) {
+
+  const [stockView, setStockView] = useState("Project");
   const [activeTab, setActiveTab] = useState("stocks");
   const [mediaList, setMediaList] = useState([]);
   const [uploading, setUploading] = useState(false);
+  
 
+  const handleStockViewChange = (newView) => {
+    console.log("🔁 Stock view changed to:", newView);
+    setStockView(newView);
+    // Optionally trigger API call here
+  };
+
+  
   const handleDragStart = (e, media) => {
     e.dataTransfer.setData('application/json', JSON.stringify({
       id: media.id,
@@ -31,46 +47,34 @@ export default function SidebarLeft({ userId, projectId }) {
   const videoInputRef = useRef(null);
   const audioInputRef = useRef(null);
 
-  // ✅ Fetch existing media
-  useEffect(() => {
+
+
+  // 🎬 Fetch Media (all or project-specific)
+  const loadMedia = async () => {
     if (!userId) return;
+    try {
+      const data = await fetchMedia({
+        userId,
+        projectId: stockView === "Project" ? projectId : null,
+      });
+      setMediaList(data);
+    } catch (err) {
+      console.error("🔥 Error loading media:", err);
+    }
+  };
 
-    const fetchMedia = async () => {
-      try {
-        const url = `http://localhost:8000/api/media?user_id=${userId}${
-          projectId ? `&project_id=${projectId}` : ""
-        }`;
-        const res = await fetch(url);
-        if (!res.ok) throw new Error(await res.text());
-        const data = await res.json();
-        setMediaList(data);
-      } catch (err) {
-        console.error("🔥 Error fetching media:", err);
-      }
-    };
+  // 👀 Fetch on user/project/stockView change
+  useEffect(() => {
+    loadMedia();
+  }, [userId, projectId, stockView]);
 
-    fetchMedia();
-  }, [userId, projectId]);
-
-  // ✅ Upload file
+// 📤 Upload file
   const handleUpload = async (file, type) => {
     if (!file) return;
     setUploading(true);
     try {
-      const formData = new FormData();
-      formData.append("file", file);
-      formData.append("user_id", userId);
-      formData.append("project_id", projectId || "");
-      formData.append("type", type);
-
-      const res = await fetch("http://localhost:8000/api/media/upload", {
-        method: "POST",
-        body: formData,
-      });
-
-      if (!res.ok) throw new Error(await res.text());
-      const data = await res.json();
-      setMediaList((prev) => [...prev, data]);
+      const newMedia = await uploadMedia({ file, type, userId, projectId });
+      setMediaList((prev) => [...prev, newMedia]);
     } catch (err) {
       alert(`Failed to upload: ${err.message}`);
     } finally {
@@ -78,43 +82,33 @@ export default function SidebarLeft({ userId, projectId }) {
     }
   };
 
-  // ✅ Delete single media item
-  const deleteMedia = async (mediaId) => {
+  // 🗑️ Delete single file
+  const handleDelete = async (mediaId) => {
     if (!window.confirm("Are you sure you want to delete this file?")) return;
-
     try {
-      const res = await fetch(`http://localhost:8000/api/media/${mediaId}`, {
-        method: "DELETE",
-      });
-      if (!res.ok) throw new Error(await res.text());
-      await res.json();
+      await deleteMedia(mediaId);
       setMediaList((prev) => prev.filter((m) => m.id !== mediaId));
     } catch (err) {
       alert("Failed to delete: " + err.message);
     }
   };
 
-  // ✅ Cleanup all media
-  const cleanupUserMedia = async () => {
+  // 🧹 Cleanup all media for user
+  const handleCleanup = async () => {
     if (!window.confirm("⚠️ Delete all your uploaded media?")) return;
     try {
-      const res = await fetch(
-        `http://localhost:8000/api/media/user/${userId}/cleanup`,
-        { method: "DELETE" }
-      );
-      if (!res.ok) throw new Error(await res.text());
-      await res.json();
+      await cleanupUserMedia(userId);
       setMediaList([]);
     } catch (err) {
       alert("Cleanup failed: " + err.message);
     }
   };
 
-  // ✅ Handle file input selection
+  // 🪄 File selection handler
   const handleFileSelect = (e, type) => {
     const file = e.target.files[0];
     if (file) handleUpload(file, type);
-    e.target.value = ""; // reset input
+    e.target.value = "";
   };
 
   return (
@@ -144,18 +138,14 @@ export default function SidebarLeft({ userId, projectId }) {
       </div>
 
       {/* Header */}
-      <div className="flex justify-between items-center px-3 py-2 bg-[#181818] border-b border-gray-800">
-        <div className="font-medium text-sm">My Stock</div>
-        <button className="flex items-center gap-1 text-gray-300 bg-gray-800 px-2 py-1 rounded hover:bg-gray-700 text-xs">
-          All <ChevronDown size={12} />
-        </button>
-      </div>
+      <StockHeader onStockViewChange={handleStockViewChange} />
 
       {/* Media Grid */}
       <MediaFiles
         mediaFiles={mediaList}
         uploading={uploading}
-        onDelete={deleteMedia} // ✅ connect delete handler
+        onDelete={handleDelete}
+        onDrag={handleDragStart}
       />
 
       {/* Footer Buttons */}
@@ -198,7 +188,7 @@ export default function SidebarLeft({ userId, projectId }) {
         <Button
           variant="ghost"
           className="flex flex-col items-center gap-1 text-xs text-gray-300 hover:bg-gray-700 transition w-16 h-18"
-          onClick={cleanupUserMedia}
+          onClick={handleCleanup}
         >
           <Wand2 size={18} />
           <span>Clean</span>
@@ -207,3 +197,26 @@ export default function SidebarLeft({ userId, projectId }) {
     </div>
   );
 }
+
+// 🧩 Stock Header Component
+const StockHeader = ({ onStockViewChange }) => {
+  const [stockView, setStockView] = useState("Project");
+
+  const toggleView = () => {
+    const newView = stockView === "Project" ? "All" : "Project";
+    setStockView(newView);
+    onStockViewChange?.(newView);
+  };
+
+  return (
+    <div className="flex justify-between items-center px-3 py-2 bg-[#181818] border-b border-gray-800">
+      <div className="font-medium text-sm text-gray-300">My Stock</div>
+      <button
+        onClick={toggleView}
+        className="flex items-center gap-1 text-gray-300 bg-gray-800 px-2 py-1 rounded hover:bg-gray-700 text-xs transition"
+      >
+        {stockView} <ChevronDown size={12} className="opacity-70" />
+      </button>
+    </div>
+  );
+};

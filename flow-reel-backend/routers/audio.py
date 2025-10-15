@@ -155,3 +155,41 @@ async def generate_waveform(
         return {"error": str(e)}
     finally:
         os.remove(tmp_path)
+
+
+# -----------------------------
+# 2️⃣ Add Audio Metadata
+# -----------------------------
+# @router.post("/{user_id}/{project_id}/add-audio")
+# async def add_audio_to_project(
+#     user_id: str,
+#     project_id: str,
+#     file_name: str = Form(...),
+#     start: float = Form(...),
+#     end: float = Form(...),
+#     duration: float = Form(...),
+#     beats: str = Form(...),  # send JSON stringified array from frontend
+#     file_id: Optional[str] = Form(None),
+# ):
+#     """Append audio info to the user's project JSON"""
+#     project_path = get_project_path(user_id, project_id)
+#     if not os.path.exists(project_path):
+#         raise HTTPException(status_code=404, detail="Project not found")
+
+#     with open(project_path, "r") as f:
+#         project_data = json.load(f)
+
+#     project_data["audios"][file_name] = {
+#         "start": start,
+#         "end": end,
+#         "duration": duration,
+#         "beats": json.loads(beats),
+#         "file_id": file_id or "",
+#         "updated_at": int(time.time()),
+#     }
+
+#     with open(project_path, "w") as f:
+#         json.dump(project_data, f, indent=2)
+
+#     return {"status": "audio_added", "file": project_path}
+

@@ -1,24 +1,20 @@
 from fastapi import APIRouter, HTTPException
 import os, json
+from directory_util import get_users_data_file_path
 
 router = APIRouter(prefix="/user", tags=["User"])
 
-USERS_FILE = "data/users.json"
-os.makedirs("data", exist_ok=True)
-
-# Ensure the file exists
-if not os.path.exists(USERS_FILE):
-    with open(USERS_FILE, "w") as f:
-        json.dump({}, f)
-
-
 def read_users():
-    with open(USERS_FILE, "r") as f:
+    users_file_path = get_users_data_file_path()
+    print(f"users_file_path: {users_file_path}")
+    with open(users_file_path, "r") as f:
         return json.load(f)
 
 
 def write_users(users):
-    with open(USERS_FILE, "w") as f:
+    users_file_path = get_users_data_file_path()
+    print(f"users_file_path: {users_file_path}")
+    with open(users_file_path, "w") as f:
         json.dump(users, f, indent=2)
 
 

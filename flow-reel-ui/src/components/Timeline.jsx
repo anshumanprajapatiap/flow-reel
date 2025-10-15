@@ -19,7 +19,7 @@ import {
   Type,
   Layers,
 } from "lucide-react";
-import { useTimeline } from "../context/TimelineContext";
+import { useTimeline } from "../contexts/TimelineContext";
 import { cn } from "../utils/cn";
 
 export default function Timeline() {
@@ -38,6 +38,7 @@ export default function Timeline() {
     selectClip,
   } = useTimeline();
 
+  
   const [zoom, setZoom] = useState(1);
   const [beats, setBeats] = useState([]);
   const [draggedItem, setDraggedItem] = useState(null);

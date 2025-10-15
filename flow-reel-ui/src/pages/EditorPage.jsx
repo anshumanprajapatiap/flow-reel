@@ -7,12 +7,10 @@ import SidebarLeft from "../components/SidebarLeft";
 import SidebarRight from "../components/SidebarRight";
 import PreviewScreen from "../components/PreviewScreen";
 import Timeline from "../components/Timeline";
-import BeatAdder from "../components/BeatAdder";
-import { TimelineProvider } from '../context/TimelineContext';
+import { TimelineProvider } from '../contexts/TimelineContext';
 
 export default function EditorPage() {
   const { projectId } = useParams();
-
   // ✅ Fetch user from localStorage
   const user = JSON.parse(localStorage.getItem("flowreel_user"));
   const userId = user?.id;
@@ -58,33 +56,32 @@ export default function EditorPage() {
           </div>
         </div>
 
-        {/* BeatAdder Modal */}
+
+        {/* Optional Beat Adder Modal */}
         <AnimatePresence>
           {isBeatAdderOpen && (
             <motion.div
-              className="absolute inset-0 bg-black/70 z-50 flex items-center justify-center"
+              className="fixed inset-0 bg-black/60 flex justify-center items-center z-50"
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
             >
-              <motion.div
-                initial={{ y: 40, opacity: 0, scale: 0.98 }}
-                animate={{ y: 0, opacity: 1, scale: 1 }}
-                exit={{ y: 40, opacity: 0, scale: 0.98 }}
-                className="w-[80%] h-[80%] bg-gray-800 rounded-2xl border border-gray-700 shadow-2xl overflow-hidden"
-              >
-                <BeatAdder
-                  file={beatModalClip}
-                  onApply={(beats) => {
-                    console.log("Beats saved:", beats);
-                    closeBeatModal();
-                  }}
-                  onCancel={closeBeatModal}
-                />
-              </motion.div>
+              <div className="bg-gray-800 p-4 rounded-lg w-96">
+                <h3 className="text-lg font-semibold mb-2">
+                  Beat Settings for {beatModalClip?.name}
+                </h3>
+                <button
+                  onClick={closeBeatModal}
+                  className="mt-4 px-3 py-1 bg-blue-600 hover:bg-blue-700 rounded"
+                >
+                  Close
+                </button>
+              </div>
             </motion.div>
           )}
         </AnimatePresence>
+
+
       </div>
     </TimelineProvider>
   );
